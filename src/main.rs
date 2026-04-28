@@ -1,3 +1,5 @@
+mod map;
+
 use bevy::prelude::*;
 
 fn main() {
@@ -9,4 +11,6 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
+
+    commands.insert_resource(map::map_gen::generate_map(50, 50))
 }

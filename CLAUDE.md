@@ -25,6 +25,17 @@ cargo fmt            # format
 
 Files have specific, focused responsibilities — keep things clean and tidy. One file should not do many unrelated jobs. Prefer one plugin per feature area.
 
+## Module Structure
+
+```
+src/
+  main.rs          # App entry point, startup systems
+  map/
+    mod.rs         # Declares submodules, re-exports Map, TileData, TileType
+    map.rs         # TileType, TileData, Map struct and constructor — no generation logic
+    map_gen.rs     # Map generation logic (not yet created)
+```
+
 ## Architecture Decisions
 
 ### Tile System
@@ -46,7 +57,7 @@ Files have specific, focused responsibilities — keep things clean and tidy. On
 
 ## Claude's Role
 
-Claude should **never write code**. Only explain concepts, approaches, and Bevy/Rust patterns so the developer writes the code themselves.
+Claude should **never write code** with the exception of claude.md. Only explain concepts, approaches, and Bevy/Rust patterns so the developer writes the code themselves.
 
 - **Level:** Intermediate Rust, beginner Bevy — assume Rust is solid, but explain Bevy-specific concepts (ECS, systems, plugins, resources, events) thoroughly including the why behind them
 - **Always explain why** — not just what to do, but the reasoning and tradeoffs behind it

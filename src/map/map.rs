@@ -1,7 +1,7 @@
 ﻿use bevy::prelude::*;
 
 /// Represents what a tile fundamentally is. Determines how it looks and how it interacts
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum TileType {
     #[default]
     Floor,
@@ -11,7 +11,7 @@ pub enum TileType {
 }
 
 /// The data attached to a single tile on the map
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TileData{
     tile_type: TileType,
     passable: bool,
@@ -30,4 +30,10 @@ impl Map{
     pub fn get(&self, x:u32, y:u32) -> &TileData{let index = (x + y * self.width) as usize; &self.data[index]}
     /// Takes a grid coordinate and returns a mutable reference so the caller can modify the tile
     pub fn set(&mut self, x:u32, y:u32) -> &mut TileData{let index = (x + y * self.width) as usize; &mut self.data[index]}
+    /// Creates a new Map of the given dimensions, with every tile init to its default state.
+    pub fn new(width:u32, height:u32) -> Self{
+        let size = (width * height) as usize;
+        Map {data: vec![TileData::default();size], width, height}
+    }
+
 }
