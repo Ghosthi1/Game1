@@ -1,4 +1,5 @@
 mod map;
+mod ai;
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
