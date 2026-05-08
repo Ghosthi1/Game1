@@ -53,6 +53,9 @@ src/
 - **Passability** is derived from `TileType` via `is_passable()` — no separate field, so it's always in sync with tile state
 - **Lazy deletion** pattern for the open set — duplicate nodes are allowed in the heap, skipped via `closed_set`; `g_scores` prevents `came_from` being overwritten by worse paths
 - **Uniform movement cost** — all moves (cardinal and diagonal) cost 1; diagonals are not penalised. This keeps the heuristic admissible with Chebyshev distance and is intentional for a grid colony sim
+- **Tie-breaking by `h`** — when two nodes share the same `f` score, the one closer to the goal (lower `h`) is preferred; keeps the search greedy in tie cases and reduces nodes explored on open maps
+- **Flat `Vec` arrays** replace HashMaps for `g_scores`, `closed_set`, and `came_from` — indexed by `x + y * width`; avoids hashing overhead and improves cache locality
+- **`came_from` stores packed `u32` indices** rather than `(u32, u32)` tuples — unpack with `index % width` for x and `index / width` for y; sentinel value `u32::MAX` means no parent set
 
 ### Tile System
 
