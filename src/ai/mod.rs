@@ -1,2 +1,2 @@
-﻿mod a_star;
+﻿pub mod a_star;
 mod flow_fields;
