@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use bevy::window::PrimaryWindow;
 use crate::map::Map;
 use crate::ai::a_star::find_path;
+use crate::constants::TILE_SIZE;
 
 /// Current tile coordinates
 #[derive(Component)]
@@ -34,13 +35,13 @@ fn spawn_character(mut commands: Commands, map: Res<Map>) {
         Speed(50.0),
         Sprite {
             color: Color::srgb(1.0,0.0,0.0),
-            custom_size: Some(Vec2::splat(16.0)),
+            custom_size: Some(Vec2::splat(TILE_SIZE)),
             ..default()
             },
         Transform::from_xyz(
             // offset by half map size to match the centred tilemap origin
-            1.0 * 16.0 - map.width as f32 * 8.0,
-            1.0 * 16.0 - map.height as f32 * 8.0,
+            1.0 * 16.0 - map.width as f32 * TILE_SIZE/2.0,
+            1.0 * 16.0 - map.height as f32 * TILE_SIZE/2.0,
             1.0
         )
     ));}
@@ -48,15 +49,15 @@ fn spawn_character(mut commands: Commands, map: Res<Map>) {
 /// Moves towards the next waypoint in the path smoothly each frame
 fn move_character (time: Res<Time>,map: Res<Map>, mut query: Query<(&mut GridPosition, &mut Path, &mut Transform, &Speed)>) {
 
-    let x_offset = map.width as f32 * 8.0;
-    let y_offset = map.height as f32 * 8.0;
+    let x_offset = map.width as f32 * TILE_SIZE/2.0;
+    let y_offset = map.height as f32 * TILE_SIZE/2.0;
 
     for (mut grid_pos, mut path, mut transform, speed) in query.iter_mut() {
         let Some(next) = path.0.front() else { continue };
 
         let target =   Vec3::new(
-            next.0 as f32 * 16.0 - x_offset,
-            next.1 as f32 * 16.0 - y_offset,
+            next.0 as f32 * TILE_SIZE - x_offset,
+            next.1 as f32 * TILE_SIZE- y_offset,
             1.0
         );
 
@@ -84,8 +85,8 @@ fn move_to_click(mouse: Res<ButtonInput<MouseButton>>,
     let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) else { return; };
 
     // add half map size to convert from centred world space back to grid coordinates
-    let raw_x = ((world_pos.x + map.width as f32 * 8.0) / 16.0);
-    let raw_y = ((world_pos.y + map.height as f32 * 8.0) / 16.0);
+    let raw_x = ((world_pos.x + map.width as f32 * TILE_SIZE/2.0) / TILE_SIZE);
+    let raw_y = ((world_pos.y + map.height as f32 * TILE_SIZE/2.0) / TILE_SIZE);
     if !(raw_x >= 0.0 && raw_x < map.width as f32) { return }
     if !(raw_y >= 0.0 && raw_y < map.height as f32) {return }
     let goal_x = raw_x as u32;

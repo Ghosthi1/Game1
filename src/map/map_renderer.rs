@@ -1,11 +1,10 @@
 ﻿use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use crate::map::Map;
+use crate::constants::TILE_SIZE;
 
 /// Manages all map rendering systems
 pub struct MapRendererPlugin;
-
-const TILE_SIZE: f32 = 16.0;
 impl Plugin for MapRendererPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tilemap);
