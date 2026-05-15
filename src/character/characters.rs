@@ -59,7 +59,7 @@ fn move_character (time: Res<Time>,map: Res<Map>, mut query: Query<(&mut GridPos
 
         transform.translation = transform.translation.move_towards(target, speed.0 * time.delta_secs());
 
-        if transform.translation.distance(target) < 0.1 {
+        if transform.translation.distance_squared(target) < 0.01 {
             transform.translation = target;
             grid_pos.0 = *next;
             path.0.pop_front();

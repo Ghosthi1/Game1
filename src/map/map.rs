@@ -59,3 +59,9 @@ impl Map{
     }
 
 }
+
+/// holds the world space offset
+#[derive(Resource)]
+pub struct MapOffset{
+    pub offset: Vec2,
+}
