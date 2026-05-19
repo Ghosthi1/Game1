@@ -13,10 +13,11 @@ impl Plugin for AiPlugin {
     }
 }
 
-fn rebuild_colonist_flow_field(mut flow_fields: ResMut<FlowFields>, map: Res<Map>, colonist_moved: Query<&GridPosition, Changed<GridPosition>>, colonist_pos: Query<&GridPosition>) {
+fn rebuild_colonist_flow_field(mut flow_fields: ResMut<FlowFields>, map: Res<Map>, colonist_moved: Query<&GridPosition, Changed<GridPosition>>,
+                               colonist_pos: Query<&GridPosition>, mut positions: Local<Vec<(u32, u32)>>) {
     if colonist_moved.is_empty() { return } // no colonist moved
 
-    let mut positions: Vec<(u32, u32)> = vec![];
+    positions.clear();
 
     for grid_pos in colonist_pos.iter() {
         positions.push(grid_pos.0);

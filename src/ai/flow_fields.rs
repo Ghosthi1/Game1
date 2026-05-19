@@ -1,4 +1,4 @@
-﻿use std::collections::{BinaryHeap, HashMap};
+﻿use std::collections::{BinaryHeap};
 use bevy::prelude::*;
 use crate::map::Map;
 use crate::constants::OFFSETS;
@@ -24,11 +24,14 @@ pub struct FlowField{
     directions: Vec<Option<(i8, i8)>>,
     /// Cost tracking buffer reused across rebuilds
     cost_so_far: Vec<u32>,
+    valid_goals: Vec<(u32, u32)>,
+    open_set: BinaryHeap<(Reverse<u32>, u32, u32)>,
 }
 impl FlowField{
     /// Creates a new flow field. Needs width and height, and it creates an empty vec for directions
     pub fn new_flow_field(width: u32, height: u32) -> FlowField{
-        FlowField{ width, height, directions: vec![None; (width * height) as usize], cost_so_far:vec![u32::MAX; (width * height) as usize]}}
+        FlowField{ width, height, directions: vec![None; (width * height) as usize], cost_so_far:vec![u32::MAX; (width * height) as usize],
+            open_set: BinaryHeap::new(), valid_goals: Vec::new() }}
     /// Gets the direction a tile is pointing
     pub fn direction_at(&self, x: u32, y: u32) -> Option<(i8, i8)>{
         // If x,y is out of bounds
@@ -42,27 +45,27 @@ impl FlowField{
 
     /// Runs Dijkstra outward from the goal tile, filling each reachable tile with a direction pointing toward the goal.
     pub fn build_flow_fields(&mut self, map: &Map, goals: &[(u32, u32)]){
-        let mut valid_goals: Vec<(u32,u32)> = Vec::new();
+        self.valid_goals.clear();
         for goal in goals {
             if goal.0 >= self.width || goal.1 >= self.height ||  !map.get(goal.0 , goal.1).is_passable() {continue;} // early return if not valid
-            valid_goals.push((goal.0 , goal.1));
+            self.valid_goals.push((goal.0 , goal.1));
         }
 
-        if valid_goals.is_empty() {return;}
+        if self.valid_goals.is_empty() {return;}
 
         // Initialization
         self.directions.fill(None);
         self.cost_so_far.fill(u32::MAX);
-        let mut open_set = BinaryHeap::new();
+        self.open_set.clear();
 
-        for goal in &valid_goals {
+        for goal in &self.valid_goals {
             let goals_index = goal.0 + goal.1 * self.width;
             self.cost_so_far[goals_index as usize] = 0;
             self.directions[goals_index as usize] = Some((0, 0));
-            open_set.push((Reverse(0u32), goal.0, goal.1));
+            self.open_set.push((Reverse(0u32), goal.0, goal.1));
         };
 
-        while let Some((Reverse(cost), x, y)) = open_set.pop() {
+        while let Some((Reverse(cost), x, y)) = self.open_set.pop() {
             // Cheaper path already found
             if self.cost_so_far[(x + y * self.width) as usize] < cost { continue }
 
@@ -76,10 +79,12 @@ impl FlowField{
                 let move_cost = if *dx != 0 && *dy != 0 { 14 } else { 10 };
                 let new_cost = cost + move_cost;
 
-                if new_cost < self.cost_so_far[(nx + ny * self.width as i32) as usize] {
-                    self.cost_so_far[(nx + ny * self.width as i32) as usize] = new_cost;
-                    self.directions[(nx + ny * self.width as i32) as usize] = Some((x as i8 - nx as i8, y as i8 - ny as i8));
-                    open_set.push(( Reverse(new_cost),nx as u32,ny as u32));
+                let ni = (nx + ny * self.width as i32) as usize;
+
+                if new_cost < self.cost_so_far[ni] {
+                    self.cost_so_far[ni] = new_cost;
+                    self.directions[ni] = Some((x as i8 - nx as i8, y as i8 - ny as i8));
+                    self.open_set.push(( Reverse(new_cost),nx as u32,ny as u32));
                 }
             }
         }
