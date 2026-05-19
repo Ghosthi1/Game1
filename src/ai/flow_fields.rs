@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use crate::map::Map;
 use crate::constants::OFFSETS;
+use std::cmp::Reverse;
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
 /// What the target of the flow field will be
@@ -49,10 +50,10 @@ impl FlowField{
             let goals_index = goal.0 + goal.1 * self.width;
             cost_so_far[goals_index as usize] = 0;
             self.directions[goals_index as usize] = Some((0, 0));
-            open_set.push((0u32, goal.0, goal.1));
+            open_set.push((Reverse(0u32), goal.0, goal.1));
         };
 
-        while let Some((cost, x, y)) = open_set.pop() {
+        while let Some((Reverse(cost), x, y)) = open_set.pop() {
             // Cheaper path already found
             if cost_so_far[(x + y * self.width) as usize] < cost { continue }
 
@@ -69,7 +70,7 @@ impl FlowField{
                 if new_cost < cost_so_far[(nx + ny * self.width as i32) as usize] {
                     cost_so_far[(nx + ny * self.width as i32) as usize] = new_cost;
                     self.directions[(nx + ny * self.width as i32) as usize] = Some((x as i8 - nx as i8, y as i8 - ny as i8));
-                    open_set.push((new_cost,nx as u32,ny as u32));
+                    open_set.push(( Reverse(new_cost),nx as u32,ny as u32));
                 }
             }
         }
