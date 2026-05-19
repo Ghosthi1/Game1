@@ -40,6 +40,7 @@ src/
     mod.rs         # Declares submodules
     a_star.rs      # find_path(map, start, goal) — returns Option<Vec<(u32,u32)>>, 8-directional
     flow_fields.rs # FlowLayer enum, FlowField struct (per-layer BFS data), FlowFields resource (HashMap of layers)
+    ai_plugins.rs  # AiPlugin; rebuild_colonist_flow_field system
   character/
     mod.rs         # Declares submodules, re-exports GridPosition, Path, Speed, CharacterPlugin
     characters.rs  # GridPosition, Path, Speed components; CharacterPlugin; spawn, movement, and click-to-move systems
@@ -69,13 +70,17 @@ src/
 - **Purpose:** shares one BFS computation across all entities targeting the same goal — every reachable tile gets a direction pointing toward the goal, so N colonists pay O(map) not O(N × path)
 - **`FlowLayer` enum** keys the `FlowFields` resource HashMap — one layer per goal type (e.g. `Colonist`); add variants as new goal types are needed
 - **`FlowField` struct** holds `width`, `height`, and `directions: Vec<Option<(i8, i8)>>` — `None` means impassable or unreachable; `Some((0,0))` means the goal tile itself
-- **`build_flow_fields(&mut self, map, goal)`** runs Dijkstra outward from the goal tile, filling each reachable tile's direction with the unit vector pointing back toward the goal — same 10/14 cardinal/diagonal cost model as A* for consistency
+- **`build_flow_fields(&mut self, map, goals)`** takes a slice of goal positions — seeds all goals into the heap at cost 0 so the Dijkstra expands from all simultaneously; each tile's direction points toward whichever goal is cheapest to reach. Same 10/14 cardinal/diagonal cost model as A* for consistency
+- **Multiple goals:** seeding multiple positions at cost 0 before the loop is all that's needed — the BFS naturally produces a "nearest goal" field for free
 - **Direction convention:** direction at `(nx, ny)` = `(x - nx, y - ny)` cast to `i8`, where `(x, y)` is the parent tile (one step closer to goal); values are always in `{-1, 0, 1}`
 - **Lazy deletion** — same pattern as A*: duplicate heap entries are allowed, stale ones skipped via `cost_so_far` comparison on pop
 - **Flat `Vec` arrays** for `cost_so_far` and `directions`, indexed by `x + y * width`; `u32::MAX` is the sentinel for "not yet reached"
 - **`OFFSETS` constant** lives in `constants.rs` and is shared with `a_star.rs` — both use the same 8-directional neighbourhood
-- **`build_flow_fields` validates upfront** — returns early if goal is out of bounds or impassable, same guard pattern as `find_path`
-- **`FlowFields` resource** holds a `HashMap<FlowLayer, FlowField>` — must be inserted into the app at startup; rebuild the relevant layer whenever the goal changes or a `TileChangedEvent` fires
+- **`build_flow_fields` validates per goal** — skips invalid or impassable goals with `continue`, not `return`, so one bad goal doesn't abort the whole build
+- **`FlowFields` resource** is inserted in `main.rs` with layers pre-populated — e.g. `Colonists` layer initialised with `FlowField::new_flow_field(MAP_WIDTH, MAP_HEIGHT)`
+- **`AiPlugin`** in `ai/ai_plugins.rs` owns the rebuild system — `rebuild_colonist_flow_field` runs every `Update`, queries `Changed<GridPosition>`, collects all colonist positions, and rebuilds the `Colonists` layer; returns early if no colonist moved that frame
+- **Rebuild trigger:** `GridPosition` is written in `move_character` (`grid_pos.0 = *next`) when a colonist arrives at a waypoint — this marks the component changed and fires the rebuild system that frame
+- **Layer design:** `FlowLayer` variants represent targets things navigate *toward* — `Colonists` means "goal is colonist positions, used by enemies"; colonists themselves use A* for player-directed movement
 
 ### Characters
 

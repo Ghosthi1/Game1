@@ -35,18 +35,22 @@ impl FlowField{
     }
 
     /// Runs Dijkstra outward from the goal tile, filling each reachable tile with a direction pointing toward the goal.
-    pub fn build_flow_fields(&mut self, map: &Map, goal: (u32,u32)){
-        if goal.0 >= self.width || goal.1 >= self.height ||  !map.get(goal.0 , goal.1).is_passable() {return;} // early return if not valid
-
+    pub fn build_flow_fields(&mut self, map: &Map, goals: &[(u32, u32)]){
+        for goal in goals {
+            if goal.0 >= self.width || goal.1 >= self.height ||  !map.get(goal.0 , goal.1).is_passable() {continue;} // early return if not valid
+        }
 
         // Initialization
         self.directions = vec![None; (self.width * self.height) as usize];
         let mut cost_so_far = vec![u32::MAX; (self.width * self.height) as usize];
-        let goals_index = goal.0 + goal.1 * self.width;
-        cost_so_far[goals_index as usize] = 0;
-        self.directions[goals_index as usize] = Some((0,0));
         let mut open_set = BinaryHeap::new();
-        open_set.push((0u32, goal.0, goal.1));
+
+        for goal in goals {
+            let goals_index = goal.0 + goal.1 * self.width;
+            cost_so_far[goals_index as usize] = 0;
+            self.directions[goals_index as usize] = Some((0, 0));
+            open_set.push((0u32, goal.0, goal.1));
+        };
 
         while let Some((cost, x, y)) = open_set.pop() {
             // Cheaper path already found
