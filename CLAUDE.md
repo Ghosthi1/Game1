@@ -99,17 +99,20 @@ src/
 ### Enemies
 
 - **`Enemy` marker component** — zero-sized, lives in `enemys/enemy.rs`; used to filter enemy-only queries and distinguish enemies from colonists who share `GridPosition` and `Speed`
-- **Flow-field movement** — enemies do not use A* or a `Path` component; each frame `move_enemy` looks up `flow_fields.colonists.direction_at(grid_pos.0.0, grid_pos.0.1)`, skips if `None` (unreachable) or `(0,0)` (already at goal), then computes the next tile by adding the `i8` direction to the current `u32` grid coords via an `i32` cast to avoid underflow
-- **System ordering:** `move_enemy` is registered `.after(rebuild_colonist_flow_field)` — ensures the flow field is always current before enemies read it; `rebuild_colonist_flow_field` is `pub` so `EnemyPlugin` can reference it for ordering
-- **Spawn:** `spawn_enemy` takes `AssetServer` as a parameter to load the enemy sprite; `GridPosition` and `Transform` must always use the same grid coordinates — mismatches cause enemies to visually slide to their logical position on the first frame
-- **Smooth movement:** identical interpolation pattern to colonists — `move_towards` each frame, `GridPosition` updated only on arrival (`distance_squared < 0.01`)
+- **Continuous movement** — enemies move in world space, not tile-to-tile; `Transform` is authoritative, `GridPosition` is derived from it each frame by `(translation + offset) / TILE_SIZE`, floored to `u32`; this allows more than 8 enemies to surround a single colonist
+- **Flow-field movement** — each frame `move_enemy` looks up the flow field direction for the enemy's current `GridPosition`, converts the `(i8, i8)` to a normalised `Vec2`, scales by `speed * delta_secs`, and adds directly to `Transform.translation`; normalisation ensures diagonal movement is not faster than cardinal
+- **Colonist proximity stop** — before applying velocity, `move_enemy` checks if any colonist is within `TILE_SIZE * 0.8` (distance squared); if so, the enemy stops moving that frame, preventing it from driving through the colonist
+- **Separation steering** — `separate_enemies` runs `.before(move_enemy)` each frame; it collects all enemy world positions into a `Vec<Vec2>` (snapshot), then iterates mutably and accumulates a repulsion force from all enemies within `TILE_SIZE`; closer enemies push harder (force scaled by `1/dist`); the force is multiplied by a strength constant and `delta_secs` then added to `Transform.translation`
+- **Query disjointness** — `move_enemy` accesses `&mut Transform` for enemies and `&Transform` for colonists; Bevy requires explicit `Without<Colonist>` on the enemy query and `Without<Enemy>` on the colonist query to prove they never overlap, otherwise it panics with `B0001` at startup
+- **System ordering:** `separate_enemies.before(move_enemy)`, `move_enemy.after(rebuild_colonist_flow_field)` — separation is applied before flow-field movement each frame; flow field is always current before enemies read it
+- **Spawn:** `spawn_enemy` takes `AssetServer` as a parameter; the texture handle must be `.clone()`d for every spawn call since `Handle<Image>` is moved on first use; `GridPosition` and `Transform` must be initialised from the same grid coordinates
 
 ### Tile System
 
 - **Hybrid approach:** map data lives in a `Resource` (flat array, indexed `x + y * width`), visuals are entities/tilemap, dynamic actors (colonists, enemies, buildings) are entities with grid position components
 - **Tiles are destructible and buildable** — walls can be broken by players and enemies, floors can be built on
 - **Tile changes:** mutate the map resource → fire a `TileChangedEvent { x, y }` → listener updates visuals and pathfinding
-- **Grid coordinates are the source of truth** — `Transform` is derived for rendering only, never used for game logic
+- **Grid coordinates are the source of truth for colonists** — colonist `Transform` is derived from `GridPosition`; for enemies the relationship is reversed: `Transform` is authoritative and `GridPosition` is derived from it each frame to support continuous swarming movement
 - **Parallel arrays for rare data:** primary array holds only hot data (tile type, passability); oxygen, temperature, etc. live in separate resources indexed the same way for cache efficiency; truly sparse properties (affects <~5% of tiles) use `HashMap<(u32, u32), T>` instead
 - **Keep `TileData` lean** — start small, add parallel resources only when actually needed
 - **Map expands infinitely** via procedural chunk-based generation; fog of war hides unexplored chunks. When the chunk system is built, fire a `MapResizedEvent` (or chunk-reveal event) so dependent systems (grid overlay, pathfinding) can react

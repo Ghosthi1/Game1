@@ -35,7 +35,7 @@ fn spawn_character(mut commands: Commands, map: Res<Map>, asset_server: Res<Asse
     let texture = asset_server.load("Colonists/Knight/Knight_1.png");
     commands.spawn((
         Colonist,
-        GridPosition((1,1)),
+        GridPosition((30,30)),
         Path(VecDeque::new()),
         Speed(50.0),
         Sprite {
@@ -45,8 +45,8 @@ fn spawn_character(mut commands: Commands, map: Res<Map>, asset_server: Res<Asse
             },
         Transform::from_xyz(
             // offset by half map size to match the centred tilemap origin
-            1.0 * TILE_SIZE - map.width as f32 * TILE_SIZE/2.0,
-            1.0 * TILE_SIZE - map.height as f32 * TILE_SIZE/2.0,
+            30.0 * TILE_SIZE - map.width as f32 * TILE_SIZE/2.0,
+            30.0 * TILE_SIZE - map.height as f32 * TILE_SIZE/2.0,
             1.0
         )
     ));}
