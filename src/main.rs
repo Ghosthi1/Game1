@@ -18,7 +18,7 @@ fn main() {
         .insert_resource(map::map_gen::generate_map(MAP_WIDTH, MAP_HEIGHT))
         .insert_resource(map::MapOffset { offset: Vec2::new(-(50.0 * TILE_SIZE/2.0), -(50.0 * TILE_SIZE/2.0)) })
         .insert_resource(FlowFields::default())
-        .add_plugins((DefaultPlugins, TilemapPlugin, map::MapRendererPlugin, CharacterPlugin, AiPlugin, EnemyPlugin, CameraPlugin))
+        .add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest()), TilemapPlugin, map::MapRendererPlugin, CharacterPlugin, AiPlugin, EnemyPlugin, CameraPlugin))
         .add_systems(Startup, setup)
         .run();
 }
