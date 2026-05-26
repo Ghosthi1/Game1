@@ -1,6 +1,6 @@
 ﻿use bevy::prelude::*;
 use crate::map::Map;
-use crate::constants::{TILE_SIZE, ENEMY_SPEED, ENEMY_STOP_RADIUS, ENEMY_SEPARATION_STRENGTH};
+use crate::constants::{TILE_SIZE, ENEMY_STOP_RADIUS, ENEMY_SEPARATION_STRENGTH, OFFSETS};
 use crate::character::{Colonist, GridPosition, Speed};
 use crate::ai::FlowFields;
 use crate::ai::ai_plugins::rebuild_colonist_flow_field;
@@ -29,18 +29,40 @@ fn move_enemy (mut query: Query<(&mut GridPosition,  &mut Transform, &Speed), (W
 
     for (mut grid_pos, mut transform, speed) in query.iter_mut() {
 
-        let Some(direction) = flow_fields.colonists.direction_at(grid_pos.0.0, grid_pos.0.1) else { continue };
-        if direction == (0,0) {continue;}
+        let dir_option = flow_fields.colonists.direction_at(grid_pos.0.0, grid_pos.0.1);
 
-        let velocity = Vec2::new(direction.0 as f32, direction.1 as f32)* speed.0 * time.delta_secs();
+        match dir_option{
+            Some(direction) => {
+                if direction == (0,0) {continue;}
 
-        if colonist_positions.iter().any(|pos| transform.translation.truncate().distance_squared(*pos) < (TILE_SIZE * ENEMY_STOP_RADIUS).powi(2)) { continue; }
+                let velocity = Vec2::new(direction.0 as f32, direction.1 as f32).normalize() * speed.0 * time.delta_secs();
 
-        transform.translation.x += velocity.x;
-        transform.translation.y += velocity.y;
+                if colonist_positions.iter().any(|pos| transform.translation.truncate().distance_squared(*pos) < (TILE_SIZE * ENEMY_STOP_RADIUS).powi(2)) { continue; }
 
-        grid_pos.0 = (((transform.translation.x + x_offset) / TILE_SIZE).floor() as u32,  ((transform.translation.y + y_offset) / TILE_SIZE).floor() as u32);
+                transform.translation.x += velocity.x;
+                transform.translation.y += velocity.y;
 
+                grid_pos.0 = (((transform.translation.x + x_offset) / TILE_SIZE).floor() as u32,  ((transform.translation.y + y_offset) / TILE_SIZE).floor() as u32);
+            }
+            None => {
+                for offset in OFFSETS{
+                    let nx = grid_pos.0.0 as i32 + offset.0;
+                    let ny = grid_pos.0.1 as i32 + offset.1;
+
+                    if nx < 0 || ny < 0 || nx >= map.width as i32 || ny >= map.height as i32{ continue; };
+
+                    if let Some(_direction) = flow_fields.colonists.direction_at(nx as u32, ny as u32){
+                        let velocity =  Vec2::new(offset.0 as f32, offset.1 as f32).normalize();
+                        transform.translation.x +=  velocity.x * speed.0 * time.delta_secs();
+                        transform.translation.y +=  velocity.y * speed.0 * time.delta_secs();
+
+                        grid_pos.0 = (((transform.translation.x + x_offset) / TILE_SIZE).floor() as u32,  ((transform.translation.y + y_offset) / TILE_SIZE).floor() as u32);
+                        break;
+                    }
+
+                }
+            }
+        }
     }
 }
 

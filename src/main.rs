@@ -4,6 +4,7 @@ mod character;
 mod constants;
 mod enemys;
 mod camera;
+mod buildings;
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
@@ -11,6 +12,7 @@ use crate::camera::CameraPlugin;
 use crate::character::CharacterPlugin;
 use crate::constants::{MAP_HEIGHT, MAP_WIDTH, TILE_SIZE};
 use crate::ai::{AiPlugin,FlowFields};
+use crate::buildings::BuildingPlugin;
 use crate::enemys::EnemyPlugin;
 use crate::enemys::EnemySpawnerPlugin;
 
@@ -20,7 +22,7 @@ fn main() {
         .insert_resource(map::MapOffset { offset: Vec2::new(-(50.0 * TILE_SIZE/2.0), -(50.0 * TILE_SIZE/2.0)) })
         .insert_resource(FlowFields::default())
         .add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest()), TilemapPlugin))
-        .add_plugins((EnemySpawnerPlugin, map::MapRendererPlugin, CharacterPlugin, AiPlugin, EnemyPlugin, CameraPlugin))
+        .add_plugins((EnemySpawnerPlugin, map::MapRendererPlugin, CharacterPlugin, AiPlugin, EnemyPlugin, CameraPlugin, BuildingPlugin))
         .add_systems(Startup, setup)
         .run();
 }
