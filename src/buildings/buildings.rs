@@ -31,8 +31,8 @@ fn place_wall_on_click( mouse: Res<ButtonInput<MouseButton>>,window: Query<&Wind
     let Ok((camera, camera_transform)) = camera.single() else { return; };
     let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) else { return; };
 
-    let raw_x = ((world_pos.x + map.width as f32 * TILE_SIZE/2.0) / TILE_SIZE);
-    let raw_y = ((world_pos.y + map.height as f32 * TILE_SIZE/2.0) / TILE_SIZE);
+    let raw_x = (world_pos.x + map.width as f32 * TILE_SIZE/2.0) / TILE_SIZE;
+    let raw_y = (world_pos.y + map.height as f32 * TILE_SIZE/2.0) / TILE_SIZE;
     if !(raw_x >= 0.0 && raw_x < map.width as f32) { return }
     if !(raw_y >= 0.0 && raw_y < map.height as f32) {return }
     let goal_x = raw_x as u32;

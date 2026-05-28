@@ -50,12 +50,16 @@ src/
   camera/
     mod.rs         # Declares submodules, re-exports CameraPlugin
     camera.rs      # CameraPlugin; zoom_camera (scroll wheel, multiplicative scale on OrthographicProjection); pan_camera (middle mouse drag, delta scaled by ortho.scale)
+  audio/
+    mod.rs         # Declares submodules, re-exports AmbientPlugin
+    ambient.rs     # AmbientPlugin; startup system that loads and spawns the looping ambient audio entity
 ```
 
 ### Assets
 
 - `assets/PlaceHolder_tileset.png` — spritesheet, three 32×32 tiles: floor (0), wall (1), door (2). `TILE_SIZE = 32.0` defined in `src/constants.rs` as a shared `pub const`, imported via `use crate::constants::TILE_SIZE` wherever tile sizing is needed
 - `assets/enemeys/Spiders/Grunt.png` — sprite for the Grunt enemy; loaded via `AssetServer` in `spawn_enemy` and set on the `Sprite` `image` field; `custom_size` is `Vec2::splat(TILE_SIZE)` but the grunt is intentionally drawn smaller than the canvas for visual style — hitbox size will be defined independently when collision is added
+- `assets/Sound/Background/ambient_spaceship.ogg` — looping ambient soundtrack; loaded and spawned as an audio entity in `audio/ambient.rs` via `AmbientPlugin`
 
 ## Architecture Decisions
 
@@ -124,6 +128,12 @@ src/
 - **Pan** — `pan_camera` checks `ButtonInput<MouseButton>::pressed(Middle)` and reads `Res<AccumulatedMouseMotion>`; translates the camera by the mouse delta multiplied by `ortho.scale` so panning speed stays consistent regardless of zoom level; x is negated (drag right = pan left), y is added as-is (screen and world y felt correct without negation)
 - **Projection access** — `OrthographicProjection` is not a standalone component in Bevy 0.18; access it via `Query<(&mut Transform, &Projection)>` and match `Projection::Orthographic(ref mut ortho)` to read or write `ortho.scale`
 - **Input resources** — Bevy 0.18 provides `AccumulatedMouseScroll` and `AccumulatedMouseMotion` as frame-accumulated resources; prefer these over `EventReader<MouseWheel>`/`EventReader<MouseMotion>` for per-frame input reading
+
+### Audio
+
+- **Entity-based audio** — Bevy 0.15+ replaced the `Audio` resource with a component model; playing audio means spawning an entity with `AudioPlayer` and `PlaybackSettings` components; despawning the entity stops playback
+- **Ambient music** — loaded and spawned once in a `Startup` system in `audio/ambient.rs`; `PlaybackSettings::LOOP` keeps it running for the lifetime of the app
+- **Asset paths** — `AssetServer::load` paths are relative to the `assets/` folder and must never include `assets/` as a prefix — Bevy prepends it automatically; capitalisation must match the filesystem exactly
 
 ### Tile System
 
