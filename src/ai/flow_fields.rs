@@ -1,18 +1,26 @@
 ﻿use std::collections::{BinaryHeap};
 use bevy::prelude::*;
 use crate::map::Map;
-use crate::constants::OFFSETS;
-use crate::constants::MAP_WIDTH;
-use crate::constants::MAP_HEIGHT;
+use crate::constants::{MAP_WIDTH, MAP_HEIGHT, OFFSETS};
 use std::cmp::Reverse;
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
-/// What the target of the flow field will be
-pub enum FlowLayer {
-    Colonist,
-    Structures,
-    Walls,
+/// Holds all the layers of the FlowFields
+#[derive(Resource)]
+pub struct FlowFields{
+    pub colonists: FlowField,
+    pub structures: FlowField,
+    pub walls: FlowField
 }
+impl Default for FlowFields{
+    fn default() -> FlowFields{
+        FlowFields {
+            colonists: FlowField::new(MAP_WIDTH, MAP_HEIGHT),
+            structures: FlowField::new(MAP_WIDTH, MAP_HEIGHT),
+            walls: FlowField::new(MAP_WIDTH, MAP_HEIGHT),
+        }
+    }
+}
+
 
 /// A precomputed directional map guiding entities toward a goal across the tile grid.
 pub struct FlowField{
@@ -29,7 +37,7 @@ pub struct FlowField{
 }
 impl FlowField{
     /// Creates a new flow field. Needs width and height, and it creates an empty vec for directions
-    pub fn new_flow_field(width: u32, height: u32) -> FlowField{
+    pub fn new(width: u32, height: u32) -> FlowField{
         FlowField{ width, height, directions: vec![None; (width * height) as usize], cost_so_far:vec![u32::MAX; (width * height) as usize],
             open_set: BinaryHeap::new(), valid_goals: Vec::new() }}
     /// Gets the direction a tile is pointing
@@ -75,18 +83,13 @@ impl FlowField{
 
                 if nx >= map.width as i32 || ny >= map.height as i32 || nx < 0 || ny < 0 {continue} // Validation
                 if  !map.get(nx as u32, ny as u32).is_passable() {continue}
-
                 if *dx != 0 && *dy != 0{
-                    let cx = x as i32 + *dx;
-                    let cy = y as i32 + *dy;
-                    if cx >= map.width as i32 || cy >= map.height as i32 || cx < 0 || cy < 0 {continue} // Validation
-                    if !map.get(cx as u32, y).is_passable() {continue}
-                    if !map.get(x, cy as u32).is_passable() {continue}
+                    if !map.get(nx as u32, y).is_passable() {continue}
+                    if !map.get(x, ny as u32).is_passable() {continue}
                 }
 
                 let move_cost = if *dx != 0 && *dy != 0 { 14 } else { 10 };
                 let new_cost = cost + move_cost;
-
                 let ni = (nx + ny * self.width as i32) as usize;
 
                 if new_cost < self.cost_so_far[ni] {
@@ -99,22 +102,4 @@ impl FlowField{
     }
 }
 
-/// Holds all the layers of the FlowFields
-#[derive(Resource)]
-pub struct FlowFields{
-    pub colonists: FlowField,
-    pub structures: FlowField,
-    pub walls: FlowField
-}
-
-impl Default for FlowFields{
-    fn default() -> FlowFields{
-        FlowFields {
-            colonists: FlowField::new_flow_field(MAP_WIDTH, MAP_HEIGHT),
-            structures: FlowField::new_flow_field(MAP_WIDTH, MAP_HEIGHT),
-            walls: FlowField::new_flow_field(MAP_WIDTH, MAP_HEIGHT),
-        }
-    }
-
-}
 
