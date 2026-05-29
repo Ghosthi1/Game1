@@ -56,7 +56,7 @@ src/
     buildings.rs   # BuildingPlugin; TileChangedEvent; place_wall_on_click, on_tile_change, on_tile_passability_change systems
   Systems/
     mod.rs         # Declares camera and ambient submodules, re-exports both
-    camera.rs      # CameraPlugin; zoom_camera (scroll wheel, multiplicative scale on OrthographicProjection); pan_camera (middle mouse drag, delta scaled by ortho.scale)
+    camera.rs      # CameraPlugin; setup (Startup — spawns Camera2d); zoom_camera (scroll wheel, multiplicative scale on OrthographicProjection); pan_camera (middle mouse drag, delta scaled by ortho.scale)
     ambient.rs     # AmbientPlugin; startup system that loads and spawns the looping ambient audio entity
 ```
 
@@ -105,7 +105,7 @@ src/
 
 - **Components:** `GridPosition((u32, u32))` — authoritative grid position (inner tuple), lives in `components/movement.rs`; `Path(VecDeque<(u32,u32)>)` — remaining waypoints, lives in `components/movement.rs`; `Speed(f32)` — movement speed in tiles per second, lives in `components/movement.rs`; `Colonist` — zero-sized marker in `character/characters.rs`, filters colonist-only queries so enemies are never accidentally included
 - **Smooth movement:** `move_character` advances `Transform` toward the next waypoint each frame using `move_towards(target, speed * delta_secs)`; `GridPosition` is only updated when the character arrives at a waypoint (`distance_squared < 0.01`, avoiding a sqrt)
-- **Click-to-move:** `move_to_click` calls `cursor_to_grid` (shared utility in `map/map.rs`) to convert cursor window position → grid coordinates, then calls `find_path`
+- **Click-to-move:** `move_to_click` calls `cursor_to_grid` (shared utility in `map/map.rs`) to convert cursor window position → grid coordinates, then calls `find_path`; start position is `path.0.front()` if a path is already in progress, otherwise `grid_pos.0` — this keeps movement smooth mid-path by continuing from the current waypoint rather than snapping back to the grid position
 - **System ordering:** `move_to_click` is chained before `move_character` via `.chain()` — ensures a click is applied before movement processes that same frame
 - **Tilemap offset:** the tilemap is centered on screen — tile world position = `tile_coord * TILE_SIZE + TILE_SIZE/2 - map_size * TILE_SIZE/2`; this places entities at the **center** of each tile; all coordinate conversions must account for this
 - **Loop-invariant hoisting:** map offset values (`width/height * TILE_SIZE/2`) are computed once before the character loop in `move_character`, not per-iteration
@@ -138,6 +138,7 @@ src/
 
 ### Camera
 
+- **Spawn** — `setup` is a `Startup` system that spawns `Camera2d`; must be registered in `CameraPlugin::build` or nothing renders
 - **Zoom** — `zoom_camera` reads `Res<AccumulatedMouseScroll>` and applies a multiplicative scale change to `OrthographicProjection.scale` each frame: `scale = (scale * (1.0 - delta.y * sensitivity)).clamp(0.3, 3.0)`; sensitivity is `0.1`; multiplicative scaling feels consistent at all zoom levels; lower clamp bound is a UX decision — nearest-neighbor keeps pixels crisp but extreme zoom-in shows very large blocky pixels, so the clamp prevents unintentionally rough-looking close-up views
 - **Pan** — `pan_camera` checks `ButtonInput<MouseButton>::pressed(Middle)` and reads `Res<AccumulatedMouseMotion>`; translates the camera by the mouse delta multiplied by `ortho.scale` so panning speed stays consistent regardless of zoom level; x is negated (drag right = pan left), y is added as-is (screen and world y felt correct without negation)
 - **Projection access** — `OrthographicProjection` is not a standalone component in Bevy 0.18; access it via `Query<(&mut Transform, &Projection)>` and match `Projection::Orthographic(ref mut ortho)` to read or write `ortho.scale`

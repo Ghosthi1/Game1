@@ -78,17 +78,9 @@ fn move_to_click(mouse: Res<ButtonInput<MouseButton>>,
     let Some(cursor_pos) = window.cursor_position() else {return};
     let Ok((camera, camera_transform)) = camera.single() else { return; };
     let Some((goal_x, goal_y)) = cursor_to_grid(camera, camera_transform, cursor_pos, &map)else { return };
-
     let goal = (goal_x, goal_y);
-
     for (grid_pos, mut path) in characters.iter_mut() {
-        if path.0.len() ==0 {
-            let new_path = find_path(&map, grid_pos.0, goal).unwrap_or_default().into();
-            path.0 = new_path;
-        }
-        else {
-            let new_path = find_path(&map, *path.0.front().unwrap(), goal).unwrap_or_default().into();
-            path.0 = new_path;
-        }
+        let start = path.0.front().copied().unwrap_or(grid_pos.0);
+        path.0 = find_path(&map, start, goal).unwrap_or_default().into();
     }
 }
