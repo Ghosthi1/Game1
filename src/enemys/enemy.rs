@@ -1,7 +1,7 @@
 ﻿use bevy::prelude::*;
 use crate::map::{Map};
 use crate::constants::{TILE_SIZE, ENEMY_STOP_RADIUS, ENEMY_SEPARATION_STRENGTH, OFFSETS, MAP_WIDTH, MAP_HEIGHT};
-use crate::character::{Colonist};
+use crate::colonists::{Colonist};
 use crate::ai::FlowFields;
 use crate::ai::ai_plugins::rebuild_colonist_flow_field;
 use crate::components::movement::{GridPosition, Speed};

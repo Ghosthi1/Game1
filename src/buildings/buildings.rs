@@ -3,7 +3,7 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
 use crate::ai::{ FlowFields};
-use crate::character::{Colonist};
+use crate::colonists::{Colonist};
 use crate::map::{Map, TileType};
 use crate::components::movement::{GridPosition, Path};
 use crate::map::cursor_to_grid;

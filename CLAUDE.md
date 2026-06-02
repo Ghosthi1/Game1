@@ -55,10 +55,10 @@ src/
   buildings/
     mod.rs         # Declares submodules, re-exports BuildingPlugin, TileChangedEvent
     buildings.rs   # BuildingPlugin; TileChangedEvent; place_wall_on_click, on_tile_change, on_tile_passability_change systems
-  Systems/
-    mod.rs         # Declares camera and ambient submodules, re-exports both
+  systems/
+    mod.rs         # Declares camera and sound submodules, re-exports both
     camera.rs      # CameraPlugin; setup (Startup — spawns Camera2d); zoom_camera (scroll wheel, multiplicative scale on OrthographicProjection); pan_camera (middle mouse drag, delta scaled by ortho.scale)
-    ambient.rs     # AmbientPlugin; startup system that loads and spawns the looping ambient audio entity
+    sound.rs       # AmbientPlugin; startup system that loads and spawns the looping ambient audio entity
 ```
 
 ### Assets
@@ -157,7 +157,7 @@ src/
 ### Audio
 
 - **Entity-based audio** — Bevy 0.15+ replaced the `Audio` resource with a component model; playing audio means spawning an entity with `AudioPlayer` and `PlaybackSettings` components; despawning the entity stops playback
-- **Ambient music** — loaded and spawned once in a `Startup` system in `Systems/ambient.rs`; `PlaybackSettings::LOOP` keeps it running for the lifetime of the app
+- **Ambient music** — loaded and spawned once in a `Startup` system in `systems/sound.rs`; `PlaybackSettings::LOOP` keeps it running for the lifetime of the app
 - **Asset paths** — `AssetServer::load` paths are relative to the `assets/` folder and must never include `assets/` as a prefix — Bevy prepends it automatically; capitalisation must match the filesystem exactly
 
 ### Tile System

@@ -8,40 +8,17 @@ use crate::constants::{COLONIST_HEALTH, COLONIST_SPEED, TILE_SIZE};
 use crate::components::movement::{GridPosition, Path, Speed};
 use crate::map::cursor_to_grid;
 
-/// Tags the character
+/// Tags the colonists
 #[derive(Component)]
 pub struct Colonist;
 
-/// Manages character spawning and movement
+/// Manages colonists spawning and movement
 pub struct CharacterPlugin;
 impl Plugin for CharacterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_character);
         app.add_systems(Update, (move_to_click,move_character ).chain());
     }
 }
-
-/// Spawns a character with GridPosition, Path and Speed components
-fn spawn_character(mut commands: Commands, map: Res<Map>, asset_server: Res<AssetServer>) {
-    let texture = asset_server.load("Colonists/Knight/Knight_1.png");
-    commands.spawn((
-        Colonist,
-        GridPosition((30,30)),
-        Health::new(COLONIST_HEALTH),
-        Speed(COLONIST_SPEED),
-        Sprite {
-            image: texture,
-            custom_size: Some(Vec2::splat(TILE_SIZE)),
-            ..default()
-            },
-        Transform::from_xyz(
-            // offset by half map size to match the centred tilemap origin
-            30.0 * TILE_SIZE + TILE_SIZE / 2.0 - map.width as f32 * TILE_SIZE / 2.0,
-            30.0 * TILE_SIZE + TILE_SIZE / 2.0 - map.height as f32 * TILE_SIZE / 2.0,
-            1.0
-        ),
-        Path(VecDeque::new()),
-    ));}
 
 /// Moves towards the next waypoint in the path smoothly each frame
 fn move_character (time: Res<Time>,map: Res<Map>, mut query: Query<(&mut GridPosition, &mut Path, &mut Transform, &Speed)>) {

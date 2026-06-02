@@ -3,7 +3,7 @@ use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{Query, Res};
 use crate::map::Map;
 use crate::ai::{FlowFields};
-use crate::character::{Colonist};
+use crate::colonists::{Colonist};
 use crate::components::movement::{GridPosition};
 
 pub struct AiPlugin;

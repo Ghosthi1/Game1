@@ -3,7 +3,7 @@ use crate::components::Health;
 use crate::constants::{ENEMY_HEALTH, ENEMY_SPEED, TILE_SIZE};
 use crate::enemys::Enemy;
 use crate::map::Map;
-use crate::components::movement::{GridPosition, Path, Speed};
+use crate::components::movement::{GridPosition, Speed};
 
 pub struct EnemySpawnerPlugin;
 impl Plugin for EnemySpawnerPlugin {
