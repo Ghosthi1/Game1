@@ -114,5 +114,4 @@ fn separate_enemies(mut query: Query<&mut Transform, With<Enemy>> ,time: Res<Tim
             transform.translation.y += y_delta;
         }
     }
-
 }
