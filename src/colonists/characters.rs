@@ -6,7 +6,7 @@ use crate::constants::{ENEMY_SEPARATION_STRENGTH, MAP_HEIGHT, MAP_WIDTH, OFFSETS
 use crate::components::movement::{GridPosition, Path, Speed};
 use crate::map::cursor_to_grid;
 use std::collections::HashSet;
-use bevy::reflect::Set;
+use crate::components::Selected;
 
 /// Tags the colonists
 #[derive(Component)]
@@ -73,11 +73,8 @@ fn move_character (time: Res<Time>,map: Res<Map>, mut query: Query<(&mut GridPos
 }
 
 /// Gets the clicked tile and sets the characters path to that
-fn move_to_click(mouse: Res<ButtonInput<MouseButton>>,
-                 window: Query<&Window, With<PrimaryWindow>>,
-                 camera: Query<(&Camera, &GlobalTransform)>,
-                 map: Res<Map>,
-                 mut characters: Query<(&GridPosition, &mut Path)> )
+fn move_to_click(mouse: Res<ButtonInput<MouseButton>>, window: Query<&Window, With<PrimaryWindow>>, camera: Query<(&Camera, &GlobalTransform)>,
+                 map: Res<Map>,mut selected:Query<(&GridPosition, &mut Path) , With<Selected>>, all_colonists: Query<&GridPosition, With<Colonist>> )
 {
     if !mouse.just_pressed(MouseButton::Right) {return}
     let Ok(window) = window.single() else {return};
@@ -86,9 +83,9 @@ fn move_to_click(mouse: Res<ButtonInput<MouseButton>>,
     let Some((goal_x, goal_y)) = cursor_to_grid(camera, camera_transform, cursor_pos, &map)else { return };
     let goal = (goal_x, goal_y);
 
-    let mut occupied: HashSet<(u32, u32)> = characters.iter().map(|(grid_pos, path)|  grid_pos.0).collect();
+    let mut occupied: HashSet<(u32, u32)> = all_colonists.iter().map(|gp| gp.0).collect();
 
-    for (grid_pos, mut path) in characters.iter_mut() {
+    for (grid_pos, mut path) in selected.iter_mut() {
         let start = path.0.front().copied().unwrap_or(grid_pos.0);
         let mut free_neighbor: Option<(u32, u32)> = None;
 

@@ -18,6 +18,7 @@ use crate::enemys::EnemySpawnerPlugin;
 use crate::systems::AmbientPlugin;
 use crate::systems::CameraPlugin;
 use crate::colonists::ColonistSpawnerPlugin;
+use crate::colonists::SelectionPlugin;
 
 fn main() {
     App::new()
@@ -25,7 +26,8 @@ fn main() {
         .insert_resource(map::MapOffset { offset: Vec2::new(-( MAP_WIDTH as f32 * TILE_SIZE/2.0), -(MAP_HEIGHT as f32* TILE_SIZE/2.0)) })
         .insert_resource(FlowFields::default())
         .add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest()), TilemapPlugin))
-        .add_plugins((EnemySpawnerPlugin,ColonistSpawnerPlugin, map::MapRendererPlugin, CharacterPlugin, AiPlugin, EnemyPlugin, CameraPlugin, BuildingPlugin, AmbientPlugin))
+        .add_plugins((EnemySpawnerPlugin,ColonistSpawnerPlugin, map::MapRendererPlugin, CharacterPlugin,
+                      AiPlugin, EnemyPlugin, CameraPlugin, BuildingPlugin, AmbientPlugin, SelectionPlugin))
         .add_systems(Update, debug)
         .run();
 }

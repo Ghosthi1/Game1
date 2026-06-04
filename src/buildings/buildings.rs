@@ -1,4 +1,5 @@
 ﻿use bevy::prelude::*;
+use bevy::prelude::KeyCode::KeyB;
 use bevy_ecs_tilemap::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
@@ -22,10 +23,10 @@ pub struct TileChangedEvent {
     pub y: u32
 }
 
-fn place_wall_on_click( mouse: Res<ButtonInput<MouseButton>>,window: Query<&Window, With<PrimaryWindow>>, camera: Query<(&Camera, &GlobalTransform)>,
+fn place_wall_on_click( mouse: Res<ButtonInput<KeyCode>>,window: Query<&Window, With<PrimaryWindow>>, camera: Query<(&Camera, &GlobalTransform)>,
                         mut map: ResMut<Map>, mut events: MessageWriter<TileChangedEvent>)
 {
-    if !mouse.just_pressed(MouseButton::Left) {return}
+    if !mouse.just_pressed(KeyB) {return}
     let Ok(window) = window.single() else {return};
     let Some(cursor_pos) = window.cursor_position() else {return};
     let Ok((camera, camera_transform)) = camera.single() else { return; };
